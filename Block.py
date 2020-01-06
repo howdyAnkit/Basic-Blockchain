@@ -13,11 +13,9 @@ class Blockchain:
     #essential keys of Block
     def create_block(self, proof, previous_hash):
         block = {'index': len(self.chain) +1,
-        'timestamp': str(datetime.datetime.now()),
-        'proof': proof,
-        'previous_hash': previous_hash,
-        }
-
+                'timestamp': str(datetime.datetime.now()),
+                'proof': proof,
+                'previous_hash': previous_hash,}
         self.chain.append(block)
         return block
 
@@ -39,12 +37,12 @@ class Blockchain:
                 new_proof +=1
         return new_proof
 
-    def hash(self, block):      #
-        encoded_block = json.dumps(block, sort_keys = True).encode      #we are taking json beacuse in later crypto making we will import it using json
+    def hash(self, block):      
+        encoded_block = json.dumps(block, sort_keys = True).encode()    #we are taking json beacuse in later crypto making we will import it using json
         return hashlib.sha256(encoded_block).hexdigest()                                                         #sort keys because our block dictonaries are sorted
     
     def is_change_valid(self, chain):
-        previous_block = chain[0]           #
+        previous_block = chain[0]           
         block_index = 1
         while block_index < len(chain):
             block = chain[block_index]
@@ -59,4 +57,42 @@ class Blockchain:
             block_index += 1
         return True
 
-    
+
+#minning the chain
+
+# creating a WebApp
+
+app = Flask(__name__)
+
+# Creating a Blockchain
+
+blockchain =  Blockchain()
+@app.route('/mine_block', methods = ['GET'])
+def mine_block():
+    previous_block = blockchain.get_previous_block()
+    previous_proof = previous_block['proof']
+    proof = blockchain.proof_of_work(previous_proof)
+    previous_hash = blockchain.hash
+    block = blockchain.create_block(proof, previous_hash)
+    response = {'message' : 'Congratualations on minning a Block!',
+                'index': block['index'],
+                'timestamp': block['timestamp'],
+                'proof': block['proof'],
+                'previous_hash' : block['previous_hash']}
+    return jsonify(response), 200
+
+
+ # Getting the Full Blockchain
+
+@app.route('/get_chain', methods = ['GET'])
+
+def get_chain():
+    response = {'chain': blockchain.chain,
+                'length' : len(blockchain.chain)}
+    return jsonify(response), 200
+
+
+# Running on serve and handling requests using postman
+
+app.run(host = '0.0.0.0', port = 5000)
+
